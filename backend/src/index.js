@@ -1,16 +1,16 @@
-const express = require("express");
-const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
+import express from "express";
+import cors from "cors";
+import usersRouter from "./routes/users.routes.js";
+import employeesRouter from "./routes/employees.routes.js";
 
-const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
 
-const usersRouter = require("./routes/users");
-app.use("/api/users", usersRouter(prisma));
+app.use("/api/users", usersRouter);
+app.use("/api/employees", employeesRouter);
 
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -12,4 +12,14 @@ model User {
   name      String
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+model Employees  {
+  id          Int      @id @default(autoincrement())
+  fullName    String
+  email       String   @unique
+  position    String
+  department  String
+  salary      Float
+  createdAt   DateTime @default(now())
 }
