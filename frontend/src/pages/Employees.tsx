@@ -3,7 +3,7 @@ import { fetcher } from "../utils/swr";
 import type { IEmployees } from "../types/employees";
 
 const Employees = () => {
-  const { data, error, isLoading } = useSWR(
+  const { data, isLoading } = useSWR(
     `http://localhost:4000/api/employees`,
     fetcher
   );
@@ -28,19 +28,17 @@ const Employees = () => {
               </tr>
             </thead>
             <tbody>
-              {!data.length && (
+              {!data.length ? (
                 <tr>
                   <td colSpan={6} className="text-center">
                     Nothing is here
                   </td>
                 </tr>
-              )}
-
-              {data.length &&
+              ) : (
                 data.map((employee: IEmployees) => {
                   return (
                     <tr key={employee.id}>
-                      <th>{employee.id}</th>
+                      <td>{employee.id}</td>
                       <td>{employee.fullName}</td>
                       <td>{employee.email}</td>
                       <td>{employee.position}</td>
@@ -48,7 +46,8 @@ const Employees = () => {
                       <td>${employee.salary.toLocaleString()}</td>
                     </tr>
                   );
-                })}
+                })
+              )}
             </tbody>
           </table>
         )}

@@ -2,12 +2,10 @@ import useSWR from "swr";
 import { fetcher } from "../utils/swr";
 
 export default function Users() {
-  const { data, error, isLoading } = useSWR(
+  const { data, isLoading } = useSWR(
     `http://localhost:4000/api/users`,
     fetcher
   );
-
-  console.log({ data, error, isLoading });
 
   return (
     <div>
@@ -22,7 +20,6 @@ export default function Users() {
       {data && !isLoading && (
         <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
           <table className="table">
-            {/* head */}
             <thead>
               <tr>
                 <th>Id</th>
@@ -32,15 +29,25 @@ export default function Users() {
             </thead>
 
             <tbody>
-              {data.map((user: { id: number; name: string; email: string }) => {
-                return (
-                  <tr key={user.id}>
-                    <th>{user.id}</th>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                  </tr>
-                );
-              })}
+              {!data.length ? (
+                <tr>
+                  <td colSpan={3} className="text-center">
+                    Nothing is here
+                  </td>
+                </tr>
+              ) : (
+                data.map(
+                  (user: { id: number; name: string; email: string }) => {
+                    return (
+                      <tr key={user.id}>
+                        <td>{user.id}</td>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                      </tr>
+                    );
+                  }
+                )
+              )}
             </tbody>
           </table>
         </div>
