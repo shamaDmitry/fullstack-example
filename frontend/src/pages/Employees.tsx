@@ -1,7 +1,10 @@
 import useSWR from "swr";
 import { fetcher } from "../utils/swr";
 import type { IEmployees } from "../types/employees";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
+
 import {
   Description,
   Dialog,
@@ -15,7 +18,6 @@ import {
 import { CheckIcon, ChevronDownIcon, DollarSign } from "lucide-react";
 import clsx from "clsx";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import useSWRMutation from "swr/mutation";
 
 const departments = [
   { id: 1, name: "Web" },
@@ -33,58 +35,63 @@ type Inputs = {
   salary: number;
 };
 
-const saveEmployee = (url: string) =>
-  fetch(url).then((res) => {
-    if (!res.ok) return null; // 404 -> no data
-    return res.json();
-  });
-
 const Employees = () => {
-  const { data, isLoading } = useSWR(
+  const [rowData, setRowData] = useState([
+    { make: "Tesla", model: "Model Y", price: 64950, electric: true },
+    { make: "Ford", model: "F-Series", price: 33850, electric: false },
+    { make: "Toyota", model: "Corolla", price: 29600, electric: false },
+  ]);
+
+  // Column Definitions: Defines the columns to be displayed.
+  const [colDefs, setColDefs] = useState([
+    { field: "make" },
+    { field: "model" },
+    { field: "price" },
+    { field: "electric" },
+  ]);
+
+  const { data, mutate, isLoading } = useSWR(
     `http://localhost:4000/api/employees`,
     fetcher
   );
-
-  const { data: currentEmployee, mutate } = useSWR(
-    "http://localhost:4000/api/employees",
-    saveEmployee
-  );
-
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
     reset,
+    formState: { errors },
   } = useForm<Inputs>({
     defaultValues: {
       fullName: "",
       email: "",
       position: "",
       department: "",
-      salary: 0,
+      salary: 1000,
     },
   });
 
-  const onSubmit: SubmitHandler<Inputs> = (formData) => {
-    console.log(formData);
+  const onSubmit: SubmitHandler<Inputs> = async (formData) => {
+    try {
+      const res = await fetch("http://localhost:4000/api/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    const method = data ? "PUT" : "POST";
-
-    mutate({ ...data, ...formData }, false);
-
-    await fetch("http://localhost:4000/api/employees", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
+      if (res.ok) {
+        mutate();
+        setIsOpen(false);
+        reset();
+        toast.success("Employee added successfully.");
+      } else {
+        toast.error("Something went wrong.");
+      }
+    } catch (error) {
+      toast.error("Something went wrong.");
+    }
   };
-
-  useEffect(() => {
-    if (data) reset(data);
-  }, [data, reset]);
 
   return (
     <>
@@ -95,6 +102,10 @@ const Employees = () => {
           <button className="btn" onClick={() => setIsOpen(true)}>
             Add Employee
           </button>
+        </div>
+
+        <div style={{ height: 200 }}>
+          <AgGridReact rowData={rowData} columnDefs={colDefs} />
         </div>
 
         <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
@@ -143,7 +154,7 @@ const Employees = () => {
         open={isOpen}
         onClose={() => setIsOpen(false)}
         transition
-        className="fixed inset-0 flex w-screen items-center justify-center bg-black/30 p-4 transition duration-300 ease-out data-closed:opacity-0"
+        className="fixed inset-0 flex w-screen items-center justify-center bg-black/30 p-4 transition duration-300 ease-out data-closed:opacity-0 z-50"
       >
         <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
           <DialogPanel className="max-w-xl w-full border border-base-200 bg-base-100 p-5 md:p-12 rounded">
@@ -190,7 +201,7 @@ const Employees = () => {
                     const { value, onChange } = field;
 
                     return (
-                      <Listbox value={value} onChange={onChange}>
+                      <Listbox value={value || ""} onChange={onChange}>
                         <ListboxButton
                           className={clsx("input w-full text-base-content", {
                             "input-error": errors.department,
